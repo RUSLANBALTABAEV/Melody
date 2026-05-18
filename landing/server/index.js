@@ -126,7 +126,7 @@ initDb()
     console.error('[ERROR] Failed to initialize DB:', err);
     process.exit(1);
   });
-=======
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
