@@ -1,267 +1,283 @@
-# Melody - Музыкальный веб-сервис
+# MELODY — инструкция по запуску
 
-# Платформа для прослушивания музыки, управления плейлистами и персонализации контента.
-
----
-
-## Оглавление
-- [О проекте](#-o-проекте)
-- [Технологии](#-технологии)
-- [Структура проекта](#-структура-проекта)
-- [Быстрый старт](#-быстрый-старт)
-- [Переменные окружения](#-структура-веток)
-- [API Документация](#-api-документация)
-- [Тестирование](#-тестирование)
-- [Вкладка в проект](#-вклад-в-проект)
+Краткое руководство по локальному запуску клиента, сервера и базы данных.
 
 ---
 
-## О проекте
+## Содержание
 
-**Melody** - это веб-приложение для:
-- Поиск и прослушивания музыкальных треков
-- Создания и управления плейлистами
-- Персонализация профиля пользователя
-- Безопасной авторизации и управления доступом
-
-### Основные функции
-| Функция | Описание | Статус |
-|---------|----------|--------|
-| Регистрация/Вход | JWT-аутенфикация с refresh-токенами | ✅ |
-| Профиль пользователи | Аватар, настройки, история | ✅ |
-| Музыкальная библиотека | Загрузка, каталогизация, поиск | ✅ |
-| Плейлисты | Создание, редактирование, шаринг | ✅ |
-| Плеер | Воспроизведение, очередь, рекомендации | ✅ |
-
----
-
-## ⚙️ Технологии
-
-### Backend
-- **Node.js** + **Express** - серверная платформа
-- **PostgreSQL** - реляционная база данных
-- **Sequalize/Knex** - ORM/Query builder
-- **bcrypt** - хэширование паролей
-- **jsonwebtoken** - JWT-аутенфикация
-
-### Frontend
-- **HTML5/CSS3/JavaScript** - базовая вёрстка
-- **Fetch API** - взаимодействие с бэкендом
-
-### Инструменты
-- **Git/GitHub** - контроль версий
-- **npm** - управление зависимостями
-- **dotenv** - управление конфигацией
-- **winston/pino** - логирование
+1. [Требования](#1-требования)  
+2. [Клонирование репозитория](#2-клонирование-репозитория)  
+3. [Конфликт портов PostgreSQL (Windows)](#3-конфликт-портов-postgresql-windows)  
+4. [Переменные окружения (.env)](#4-переменные-окружения-env)  
+5. [Запуск БД (Docker)](#5-запуск-бд-docker)  
+6. [Установка зависимостей](#6-установка-зависимостей)  
+7. [Запуск сервера](#7-запуск-сервера)  
+8. [Запуск клиента](#8-запуск-клиента)  
+9. [Открытие сайта](#9-открытие-сайта)  
+10. [Проверка](#10-проверка)  
+11. [Быстрый старт](#11-быстрый-старт)  
+12. [Проблемы](#12-проблемы)  
+13. [Структура проекта](#13-структура-проекта)  
+14. [API](#14-api)
 
 ---
 
-## 🗂️ Структура проекта
+## 1. Требования
 
-![alt text](image-1.png)
+Перед началом убедитесь, что установлено:
 
-## 🚀 Быстрый старт
+| Что нужно | Ссылка |
+|-----------|--------|
+| **Node.js** v18 или выше | [nodejs.org](https://nodejs.org/) |
+| **Git** | [git-scm.com](https://git-scm.com/) |
+| **Docker Desktop** | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
 
-### Требования
-- Node.js >= 18.x
-- PostgreSQL >= 14.x
-- npm >= 9.x
+**Проверка версий** (в терминале):
 
-### Установка 
-
-# 1. Клонируйте репозиторий
-```bash
-git clone https://github.com/tehnolize/Melody.git
-cd Melody
+```powershell
+node -v
+npm -v
+git --version
+docker -v
 ```
 
-# 2. Установите зависимости
-```bash
+---
+
+## 2. Клонирование репозитория
+
+```powershell
+cd C:\Users\ВАШ_ПОЛЬЗОВАТЕЛЬ\Downloads
+git clone -b feature/PROJ-007-music-core-profile https://github.com/tehnolize/Melody.git site
+cd site
+```
+
+> Замените `ВАШ_ПОЛЬЗОВАТЕЛЬ` на имя пользователя Windows.
+
+---
+
+## 3. Конфликт портов PostgreSQL (Windows)
+
+Если порт **5432** занят локальным PostgreSQL:
+
+1. Откройте файл `docker-compose.yml` в корне `site/`.
+2. Измените проброс порта для сервиса БД.
+
+**Было:**
+
+```yaml
+ports:
+  - "5432:5432"
+```
+
+**Стало:**
+
+```yaml
+ports:
+  - "55433:5432"
+```
+
+В `DATABASE_URL` тогда используйте порт **55433** (см. следующий раздел).
+
+---
+
+## 4. Переменные окружения (.env)
+
+Создайте или отредактируйте файл:
+
+**`landing/server/.env`**
+
+```env
+# Без конфликта портов
+DATABASE_URL=postgresql://melody:melody@localhost:5432/melody
+
+# С конфликтом портов (если в docker-compose проброшен 55433)
+# DATABASE_URL=postgresql://melody:melody@localhost:55433/melody
+
+JWT_SECRET=melody_dev_secret_XXXXXXXXXXXX
+PORT=8787
+
+# Дополнительно
+CORS_ORIGIN=http://localhost:5173
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your@gmail.com
+SMTP_PASS=app_password
+SMTP_FROM=your@gmail.com
+FEEDBACK_TO=target@gmail.com
+
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxx
+```
+
+> Оставьте в файле **одну** актуальную строку `DATABASE_URL` под ваш порт.
+
+Пример для копирования можно взять из `landing/server/.env.example`, если он есть в репозитории.
+
+---
+
+## 5. Запуск БД (Docker)
+
+Из корня проекта (`site/`):
+
+```powershell
+cd site
+docker compose down -v
+docker compose up -d db
+docker compose ps
+```
+
+---
+
+## 6. Установка зависимостей
+
+**Клиент** (`landing/`):
+
+```powershell
+cd site\landing
 npm install
 ```
 
-# 3. Настройте окружение 
-```bash
-cp .env.example .env
+**Сервер** (`landing/server/`):
+
+```powershell
+cd site\landing\server
+npm install
 ```
 
-# Отредактируйте .env (см. раздел ниже)
+---
 
-# 4. Инициализируйте базу данных
-```bash
-npm run migrate
+## 7. Запуск сервера
+
+```powershell
+cd site\landing\server
+node index.js
 ```
 
-# 5. Запустите сервер в режиме разработки
-```bash
+**Ожидаемый вывод:**
+
+```text
+[DB] Schema initialized
+[SERVER] Running on http://localhost:8787
+```
+
+---
+
+## 8. Запуск клиента
+
+В **новом** терминале:
+
+```powershell
+cd site\landing
 npm run dev
 ```
 
-# 6. Для продакшена:
-```bash
-npm start
+**Ожидается:** адрес вида [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 9. Открытие сайта
+
+Откройте в браузере:
+
+**[http://localhost:5173](http://localhost:5173)**
+
+---
+
+## 10. Проверка
+
+```powershell
+curl http://localhost:8787/api/me
 ```
 
-Доступные скрипты (package.json)
+Ожидается ответ с ошибкой авторизации, например:
 
-| Команды              | Описание                      |
-|----------------------|-------------------------------|
-|npm run dev           | Запуск с nodemon (hot-reload) |
-|npm start             | Запуск в продакшен-режиме     |
-|npm run migrate       | Применение миграций БД        |
-|npm run migrate:undo  | Откат последней миграции      |
-|npm test              | Запуск тестов                 |
-|npm run test:coverage | Тесты с покрытием             |
-|npm run lint          | Проверка стиля кода (ESLint)  |
-
-⚙️ Пемеренные окружения 
-
-Создайте файл .env на основе .env.example
-
-### СЕРВЕР
-```bash
-NODE_ENV=development
-PORT=3000
-API_PREFIX=/api/v1
-CORS_ORIGIN=http://localhost:5173
+```json
+{"error":"unauthorized"}
 ```
 
-## БАЗА ДАННЫХ (PostgreSQL)
-```bash
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=melody
-DB_USER=postgres
-DB_PASSWORD=your_secure_password
-DB_POOL_MIN=2
-DB_POOL_MAX=10
+```powershell
+curl http://localhost:8787/api/popular
 ```
 
-## JWT АУТЕНТИФИКАЦИЯ
-```bash
-JWT_SECRET=your_super_secret_key_change_in_production
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+Ожидается JSON с массивом популярного контента, например:
+
+```json
+{"items":[...]}
 ```
 
-## EMAIL (восстановление пароля)
-```bash
-SMTP_HOST=smtp.mail.ru
-SMTP_PORT=587
-SMTP_USER=your_email@mail.ru
-SMTP_PASS=your_app_password
-EMAIL_FROM=Melody <noreply@melody.app>
+---
+
+## 11. Быстрый старт
+
+| Терминал | Команды (из корня `site/`, если не указано иначе) |
+|----------|---------------------------------------------------|
+| **1** | `docker compose up -d db` |
+| **2** | `cd landing\server` → `node index.js` |
+| **3** | `cd landing` → `npm run dev` |
+
+---
+
+## 12. Проблемы
+
+| Симптом | Что сделать |
+|---------|-------------|
+| `npm error Missing script "dev"` | Для API используйте `node index.js` в папке `landing/server`. |
+| `DATABASE_URL is not set` | Создайте `landing/server/.env` и задайте переменные. |
+| `password authentication failed` | Часто конфликт порта с локальным Postgres — смените проброс на **55433** и обновите `DATABASE_URL`. |
+| `EADDRINUSE` | Освободите порт **8787** или смените `PORT` в `.env`. |
+| Ошибка **bcrypt** (Mac) | `npm install bcrypt --build-from-source` |
+
+---
+
+## 13. Структура проекта
+
+```text
+site/
+├── docker-compose.yml
+├── DB_STRUCTURE.md
+├── README.md
+└── landing/
+    ├── src/
+    │   └── App.tsx
+    ├── package.json
+    └── server/
+        ├── index.js
+        ├── .env
+        ├── .env.example
+        ├── package.json
+        ├── routes/
+        ├── controllers/
+        ├── services/
+        ├── middleware/
+        ├── db/
+        └── uploads/
 ```
 
-## ЗАГРУЗКА ФАЙЛОВ
-```bash
-UPLOAD_PATH=./uploads/music
-MAX_FILE_SIZE=52428800
-ALLOWED_FORMATS=mp3,wav,flac
-```
+---
 
-## ЛОГИРОВАНИЕ
-```bash
-LOG_LEVEL=info
-LOG_FILE=./logs/app.log
-```
+## 14. API
 
-### 🌿 Структура веток
+| Метод | Путь |
+|-------|------|
+| `POST` | `/api/auth/register` |
+| `POST` | `/api/auth/login` |
+| `POST` | `/api/auth/logout` |
+| `GET` | `/api/me` |
+| `DELETE` | `/api/users/me` |
+| `GET` | `/api/tracks` |
+| `POST` | `/api/upload` |
+| `POST` | `/api/tracks/delete` |
+| `GET` | `/api/search` |
+| `GET` | `/api/albums` |
+| `POST` | `/api/albums` |
+| `PATCH` | `/api/albums/:id` |
+| `DELETE` | `/api/albums/:id` |
+| `GET` | `/api/profile/me` |
+| `GET` | `/api/popular` |
+| `POST` | `/api/chat` |
+| `POST` | `/api/feedback` |
+| `GET` | `/music/:ownerId/:filename` |
 
-### Проект использует GitHub Flow. Все изменения вносятся через feature-веток:
-|  Ветка                                    |  Описание                           |
-|-------------------------------------------|-------------------------------------|
-|  main                                     | Стабильная версия, рабочий сайт     |
-|  feature/PROJ-004-database-changes        | Схема БД, модели, миграции          |
-|  feature/PROJ-005-server-crud             | Серверная логика, CRUD API          |
-|  feature/PROJ-006-backend-postgresql-auth | Авторизация, JWT, роли              |
-|  feature/PROJ-007-music-core-profile      | Плеер, плейлисты, профиль           |  
-
-### API Документация
-### Базовый URL
-```bash
-http://localhost:3000/api/v1
-```
-
-### Основные эндпоинты
-
-🔐 Авторизация 
-
-|  Метод  |  Эндпоинт      |  Описание              |  Доступ     |
-|---------|----------------|------------------------|-------------|
-|  POST   |  /auth/login   |  Вход                  |  Публичный  |
-|  POST   |  /auth/refresh |  Обновление токена     |  Публичный  |
-|  POST   |  /auth/logout  |  Выход                 |  Защищённый |
-|  POST   |  /auth/forgot  |  Запрос сбороса пароля |  Публичный  |
-
-👔 Пользователи
-
-|  Метод  |  Эндопинт          |  Описание             |  Доступ     |
-|---------|--------------------|-----------------------|-------------|
-|  GET    |  /users/me/        |  Получение профиля    |  Защищённый |
-|  PUT    |  /users/me/        |  Обновление профиля   |  Защищённый |
-|  POST   |  /users/avatar/    |  Загрузка аватара     |  Защищённый |
-
-🎶 Треки
-
-|  Метод  |  Эндпоинт       |  Описание                        |  Доступ     |
-|---------|-----------------|----------------------------------|-------------|
-|  GET    |  /tracks        |  Список треков (с пагинацией)    |  Публичный  |
-|  GET    |  /tracks/:id    |  Детали трека                    |  Публичный  |
-|  POST   |  /tracks        |  Загрузка трека                  |  Защищённый |
-|  PUT    |  /tracks/:id    |  Редактирование трека            |  Защищенный |
-|  DELETE |  /tracks/:id    |  Удаление трека                  |  Защищённый |
-
-📑 Плейлисты
-
-|  Метод  |  Эндпоинт                       |  Описание                    |  Доступ      |
-|---------|---------------------------------|------------------------------|--------------|
-|  GET    |  /playlists                     |  Мой плейсты                 |  Защищённый  |
-|  POST   |  /playlists                     |  Создать плейлист            |  Защищённый  |
-|  PUT    |  /playlists/:id                 |  Редактировать плейлист      |  Владелец    |
-|  POST   |  /playlists/:id/tracks          |  Добавить трек  |  Владелец  |  Владелец    |
-|  DELETE |  /playlists/:id/tracks/trackId  |  Удалить трек  |  Владелец  |
-
-
-🧪 Тестирование
-
-# Запустить все тесты
-```bash
-npm test
-```
-
-# Запустить с покрытием
-```bash
-npm run test:coverage
-```
-
-# Запустить только интеграционные тесты
-```bash
-npm run test:integration
-```
-
-# Запустить тесты авторизации
-```bash
-npm run test:auth
-```
-
-Ручное тестирование (Postman/cURL)
-# Регистрация
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"StrongPass123","username":"testuser"}'
-```
-
-# Получение треков с пагинацией
-```bash
-curl "http://localhost:3000/api/v1/tracks?limit=10&page=1&sort=-createdAt"
-```
-
-# Создание плейлиста (с токеном)
-```bash
-curl -X POST http://localhost:3000/api/v1/playlists \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -d '{"name":"My Playlist","description":"Test playlist"}'
-```
+---
